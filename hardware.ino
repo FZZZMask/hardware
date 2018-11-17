@@ -13,10 +13,12 @@
 #define delayTime2 40
 #define offTime 9680
 #define intervalTime 10
+#define ConstK 0.5
 
-int getDust()
+float getDust()
 {
   static long value = 200;
+  static float Voc = 0.6;
 
   int dustVal = 0;
   // ledPowerPin is any digital pin on the arduino connected to Pin 3 on the sensor
@@ -27,7 +29,6 @@ int getDust()
   digitalWrite(ledPowerPin, HIGH);
   delayMicroseconds(offTime);
 
-
   // 因为这个传感器貌似有问题，所以滤波只能这样
   if (dustVal != 0)
     if (((float)abs(value - dustVal) / (float)value < 2.0) || value == 0)
@@ -35,8 +36,15 @@ int getDust()
     else
       value = (value * 199 + dustVal) / 200;
 
-  int percent = value * 100 / 900;
-  return percent;
+  float Vo = value / 1024.0 * 5.0;
+  float dV = Vo - Voc;
+  if ( dV < 0 )
+  {
+    dV = 0;
+    Voc = Vo;
+  }
+  float dustDensity = dV / ConstK * 100.0;
+  return dustDensity;
 }
 
 int getHumidity()
@@ -112,10 +120,10 @@ void setup()
 void loop()
 {
   int count = 0;
-  int dust, humidity, temperature;
-  float breath;
+  int humidity, temperature;
+  float dust, breath;
   String toSend;
-  
+
 
   while (1)
   {
@@ -133,14 +141,14 @@ void loop()
     if (count == 30)
     {
       toSend = "{\"dust\":";
-      toSend+=dust;
-      toSend+=",\"humidity\":";
-      toSend+=humidity;
-      toSend+=",\"temperature\":";
-      toSend+=temperature;
-      toSend+=",\"breath\":";
-      toSend+=breath;
-      toSend+="}";
+      toSend += dust;
+      toSend += ",\"humidity\":";
+      toSend += humidity;
+      toSend += ",\"temperature\":";
+      toSend += temperature;
+      toSend += ",\"breath\":";
+      toSend += breath;
+      toSend += "}";
       Serial.println(toSend);
 
       count = 0;
