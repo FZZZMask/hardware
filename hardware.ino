@@ -14,7 +14,7 @@
 #define offTime 9680
 #define intervalTime 10
 
-long getDust()
+int getDust()
 {
   static long value = 200;
 
@@ -35,7 +35,8 @@ long getDust()
     else
       value = (value * 199 + dustVal) / 200;
 
-  return value;
+  int percent = value * 100 / 900;
+  return percent;
 }
 
 int getHumidity()
